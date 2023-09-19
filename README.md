@@ -1,22 +1,34 @@
 # Worklytics Export to GCP Terraform Module
 
-[![Latest Release](https://img.shields.io/github/v/release/Worklytics/terraform-gcp-worklytics-export)](https://github.com/Worklytics/terraform-aws-worklytics-export/releases/latest)
-[![tests](https://img.shields.io/github/actions/workflow/status/Worklytics/terraform-gcp-worklytics-export/terraform_integration.yaml?label=tests)](https://github.com/Worklytics/terraform-aws-worklytics-export/actions?query=branch%3Amain)
+[![Latest Release](https://img.shields.io/github/v/release/Worklytics/terraform-gcp-worklytics-export)](https://github.com/Worklytics/terraform-gcp-worklytics-export/releases/latest)
+[![tests](https://img.shields.io/github/actions/workflow/status/Worklytics/terraform-gcp-worklytics-export/terraform_integration.yaml?label=tests)](https://github.com/Worklytics/terraform-gcp-worklytics-export/actions?query=branch%3Amain)
 
-This module creates infra to support exporting data from Worklytics to GCP.
+This module sets IAM policy to support exporting data from Worklytics to a pre-existing GCS bucket
+and provisions instructions for doing so.
 
 It is published in the [Terraform Registry](https://registry.terraform.io/modules/Worklytics/worklytics-export/gcp/latest).
+
+It is arguably too minimal to be its own module, but we did so to make it analogous to [AWS case](https://github.com/Worklytics/terraform-aws-worklytics-export)
+and provide for potential future provisioning of the connection from the Worklytics side.
 
 ## Usage
 
 from Terraform registry:
 ```hcl
+resource "google_storage_bucket" "worklytics_export" {
+  name     = "worklytics-export"
+
+  # customize as needed; see https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#argument-reference
+}
+
+
 module "worklytics-export" {
   source  = "terraform-gcp-worklytics-export"
   version = "~> 0.1.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
-  worklytics_tenant_sa_email_ = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = google_storage_bucket.worklytics_export.name
 }
 ```
 
@@ -26,14 +38,18 @@ module "worklytics-export" {
   source  = "git::https://github.com/worklytics/terraform-gcp-worklytics-export/?ref=v0.1.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
-  worklytics_tenant_sa_email_ = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = google_storage_bucket.worklytics_export.name
 }
 ```
 
 ## Outputs
 
-#### `worklytics_export_bucket`
-The Terraform resource created as the export bucket. See [`google_storage_bucket`](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_storage_bucket) for details.
+#### `todo_markdown`
+
+If `todo_as_outputs` is set to true, this will be a markdown-formatted string of TODOs for you to
+complete outside of Terraform.
+
 
 ## Compatibility
 
