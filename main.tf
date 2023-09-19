@@ -11,7 +11,7 @@ locals {
   todo_content = <<EOT
 # TODO : Configure Data Export in Worklytics
 
-1. Ensure you're authenticated with Worklytics. Either sign-in at [https://app.worklytics.co](https://app.worklytics.co)
+1. Ensure you're authenticated with Worklytics. Either sign-in at [https://${var.worklytics_host}](https://${var.worklytics_host})
   with your organization's SSO provider *or* request OTP link from your Worklytics support team.
 2. Visit `https://${var.worklytics_host}/analytics/data-export/connect?bucket=${var.bucket_name}`
 3. Review any additional settings (such as the Dataset type you'd like to export) and adjust
