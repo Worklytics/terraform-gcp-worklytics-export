@@ -21,6 +21,7 @@ jobs:
       GCP_IDENTITY_POOL: 'projects/432357880585/locations/global/workloadIdentityPools/github-actions/providers/github'
       EXAMPLE_TENANT_SA_EMAIL: tf-gcp-export-tenant@worklytics-ci.iam.gserviceaccount.com
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUCKET_NAME: terraform-gcp-worklytics-export-ci
     steps:
       - name: Get timestamp
         id: timestamp
@@ -50,15 +51,12 @@ jobs:
         run: |
           terraform init
           terraform apply -auto-approve \
-            -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" \
-            -var="resource_name_prefix=tf_aws_w8s_export_ci_${{ env.timestamp}}" \
-            -var="worklytics_tenant_id=${{ env.EXAMPLE_TENANT_SA_ID }}"
-          echo "worklytics_export_bucket_id=$(terraform output -raw worklytics_export_bucket_id)" >> $GITHUB_OUTPUT
-          echo "worklytics_tenant_aws_role_arn=$(terraform output -raw worklytics_tenant_aws_role_arn)" >> $GITHUB_OUTPUT
+            -var="bucket_name=${{ env.BUCKET_NAME }}" \
+            -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
 
-      - name: 'Terraform - integration test examples/basic s3 write'
+      - name: 'Terraform - integration test examples/basic gcs write'
         run: |
-          ./test/rsync.sh ${{ env.EXAMPLE_TENANT_SA_EMAIL }} ${{ steps.terraform_apply.outputs.worklytics_export_bucket_id }} ${{ steps.terraform_apply.outputs.worklytics_tenant_aws_role_arn }}
+          ./test/rsync.sh ${{ env.EXAMPLE_TENANT_SA_EMAIL }} ${{ env.BUCKET_NAME }}
 
       - name: 'Terraform - integration test examples/basic terraform destroy'
         if: always() # try to force this to ALWAYS happen, no matter if previous stuff failed
@@ -66,6 +64,5 @@ jobs:
         run: |
           aws s3 rm s3://${{ steps.terraform_apply.outputs.worklytics_export_bucket_id }} --recursive
           terraform destroy -auto-approve \
-            -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" \
-            -var="worklytics_tenant_id=${{ env.EXAMPLE_TENANT_SA_ID }}" \
-            -var="resource_name_prefix=tf_aws_w8s_export_ci_${{ env.timestamp}}"
+            -var="bucket_name=${{ env.BUCKET_NAME }}" \
+            -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
