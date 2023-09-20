@@ -23,10 +23,6 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUCKET_NAME: terraform-gcp-worklytics-export-ci
     steps:
-      - name: Get timestamp
-        id: timestamp
-        run: |
-          echo "timestamp=$(date  +%Y%m%d'T'%H%M%S)" >> $GITHUB_ENV
 
       - name: Check out code
         uses: actions/checkout@v3
@@ -43,7 +39,6 @@ jobs:
         with:
           workload_identity_provider: ${{ env.GCP_IDENTITY_POOL }}
           service_account: ${{ env.CI_SA_EMAIL }}
-
 
       - name: 'Terraform - integration test examples/basic apply'
         id: terraform_apply
@@ -62,7 +57,7 @@ jobs:
         if: always() # try to force this to ALWAYS happen, no matter if previous stuff failed
         working-directory: examples/basic
         run: |
-          aws s3 rm s3://${{ steps.terraform_apply.outputs.worklytics_export_bucket_id }} --recursive
+          gsutil -m rm -r gs://${{ env.BUCKET_NAME }}/*
           terraform destroy -auto-approve \
             -var="bucket_name=${{ env.BUCKET_NAME }}" \
             -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
