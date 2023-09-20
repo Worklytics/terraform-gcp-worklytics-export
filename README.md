@@ -21,7 +21,6 @@ resource "google_storage_bucket" "worklytics_export" {
   # customize as needed; see https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#argument-reference
 }
 
-
 module "worklytics-export" {
   source  = "terraform-gcp-worklytics-export"
   version = "~> 0.1.0"
@@ -76,5 +75,16 @@ we will strive to follow [standard Terraform module structure](https://developer
 and [style conventions](https://developer.hashicorp.com/terraform/language/syntax/style).
 
 See [examples/basic/](examples/basic/) for a simple example of how to use this module.
+
+
+## Non-Terraform Instructions
+
+If you don't wish to use Terraform to prepare your infrastructure for receiving exports from
+Worklytics, you can do the following.
+
+  1. Create a GCS bucket or choose a preexisting one that you wish to export to. (GCP Console or CLI)
+  2. Grant the `roles/storage.objectAdmin` IAM role to your Worklytics Tenant's Service Account
+     (obtain from Worklytics) on the bucket.
+  3. Create an Export connection via the Worklytics web app.
 
 
