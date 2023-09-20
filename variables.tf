@@ -10,8 +10,8 @@ variable "worklytics_tenant_sa_email" {
 
 variable "worklytics_host" {
   type        = string
-  description = "host of worklytics instance where tenant resides. (e.g. intl.worklytics.co for prod; but may differ for dev/staging)"
-  default     = "intl.worklytics.co"
+  description = "host of worklytics instance where tenant resides. (e.g. app.worklytics.co for prod; but may differ for dev/staging)"
+  default     = "app.worklytics.co"
 }
 
 variable "todos_as_outputs" {
