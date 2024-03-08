@@ -23,7 +23,7 @@ resource "google_storage_bucket" "worklytics_export" {
 
 module "worklytics-export" {
   source  = "terraform-gcp-worklytics-export"
-  version = "~> 0.1.0"
+  version = "~> 0.2.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
