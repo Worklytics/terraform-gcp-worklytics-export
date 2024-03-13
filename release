@@ -6,6 +6,9 @@ NC='\e[0m' # No Color
 
 RELEASE=$1
 
+printf "Creating release ${GREEN}$RELEASE${NC}; this should be a semantic version number, e.g. 'v{MAJOR}.{MINOR}.{PATCH}'\n"
+
+
 # ensure repo is clean
 if [ -z "$(git status --porcelain)" ]; then
   printf "${GREEN}Git repository is clean. No uncommitted changes detected.${NC}\n"

@@ -1,4 +1,4 @@
-name: Create Release on Tag vX.Y.Z
+name: Create Release on Tag v{MAJOR}.{MINOR}.{PATCH}
 
 on:
   push:
