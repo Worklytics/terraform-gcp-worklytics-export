@@ -76,6 +76,12 @@ and [style conventions](https://developer.hashicorp.com/terraform/language/synta
 
 See [examples/basic/](examples/basic/) for a simple example of how to use this module.
 
+Developing:
+  1. branch from `main`; open a PR to `main` when ready for review.
+  2. releases will be periodically cut from `main` by tagging with semantic version
+     (v{MAJOR}.{MINOR}.{PATCH}), push to origin (GitHub), and create a release (hopefully automatic
+     via GitHub Actions; via GitHub UI if not).
+  3. releases should be automatically picked up by Terraform Registry (some lag here)
 
 ## Non-Terraform Instructions
 
