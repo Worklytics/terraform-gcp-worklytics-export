@@ -5,9 +5,7 @@
 
 EXAMPLE_TENANT_SA_EMAIL=$1
 BUCKET_NAME=$2
-
-# https://cloud.google.com/sdk/gcloud/reference/auth/print-identity-token
-CI_RUN=`date +%Y%m%d'T'%H%M%S`
+CI_RUN=$3
 
 
 echo "EXAMPLE_TENANT_SA_EMAIL: ${EXAMPLE_TENANT_SA_EMAIL}"
