@@ -7,14 +7,13 @@ on:
       - main
       - 'rc-*'
 
-
 jobs:
   tf_integration:
     name: 'Terraform integration (on tf ${{ matrix.terraform_version }})'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        terraform_version: [ '~1.4.0', '~1.5.0', '~1.6.0', '~1.7.0', 'latest' ] # haven't seen < 1.4 in the wild, so limit for sanity
+        terraform_version: [ '~1.6.0', '~1.7.0', '~1.8.0', '~1.9.0', 'latest' ] # haven't seen < 1.4 in the wild, so limit for sanity
     permissions:
       contents: 'read'
       id-token: 'write'
