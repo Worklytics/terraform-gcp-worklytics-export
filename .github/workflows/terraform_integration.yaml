@@ -43,9 +43,9 @@ jobs:
           service_account: ${{ env.CI_SA_EMAIL }}
 
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
+        uses: 'google-github-actions/setup-gcloud@v2'
         with:
-          version: '>= 363.0.0'
+          version: '>= 483.0.0'
 
       - name: 'Terraform - integration test examples/basic apply'
         id: terraform_apply
