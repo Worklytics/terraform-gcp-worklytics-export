@@ -1,3 +1,5 @@
+name: terraform_lint
+
 on:
   [push]
 

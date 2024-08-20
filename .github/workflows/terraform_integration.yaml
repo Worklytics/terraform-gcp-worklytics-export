@@ -1,3 +1,5 @@
+name: terraform_integration
+
 on:
   pull_request:
   push:

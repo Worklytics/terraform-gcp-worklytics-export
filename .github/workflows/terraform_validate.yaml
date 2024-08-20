@@ -1,3 +1,5 @@
+name: terraform_validate
+
 on:
   [push]
 
