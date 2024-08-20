@@ -52,8 +52,11 @@ complete outside of Terraform.
 
 ## Compatibility
 
-This module is meant for use with Terraform 1.0+. If you find incompatibilities using Terraform >=
-1.0, please open an issue.
+This module is meant for use with Terraform 1.1+. If you find incompatibilities using Terraform >=
+1.1, please open an issue.
+
+As of August 2024, we run integration tests on the latest Terraform versions 1.6-1.9 (everything
+released within the past year).
 
 ## Usage Tips
 
