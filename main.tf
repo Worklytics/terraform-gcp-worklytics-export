@@ -28,6 +28,7 @@ terraform {
 #   bucket_write_iam_role = "projects/my-project/roles/worklyticsExportWriter"
 #
 # See: https://docs.worklytics.co/analytics/data-export/google-cloud-storage
+#trivy:ignore:AVD-GCP-0007 - objectAdmin is the documented minimum for GCS export (overwrite requires delete+create); see comment above
 resource "google_storage_bucket_iam_member" "worklytics_export" {
   bucket = var.bucket_name
   member = "serviceAccount:${var.worklytics_tenant_sa_email}"
