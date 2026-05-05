@@ -49,17 +49,25 @@ jobs:
           version: '>= 483.0.0'
 
       - name: 'Pin Google provider to major ${{ matrix.google_provider_major }}'
-        # Write a temporary override that constrains init to the matrix major version.
-        # Terraform resolves the intersection with the root module's ">= 5.0, < 8" constraint.
+        # Overwrite providers.tf (the sole required_providers location) to pin to this matrix
+        # major version. Terraform resolves the intersection with the root module's ">= 5.0"
+        # constraint. Writing into the existing file avoids a duplicate required_providers error.
         run: |
-          cat > examples/basic/provider_version_pin.tf <<EOF
+          cat > examples/basic/providers.tf <<EOF
           terraform {
+            backend "local" {
+              path = "terraform.tfstate"
+            }
+
             required_providers {
               google = {
                 source  = "hashicorp/google"
                 version = "~> ${{ matrix.google_provider_major }}.0"
               }
             }
+          }
+
+          provider "google" {
           }
           EOF
 

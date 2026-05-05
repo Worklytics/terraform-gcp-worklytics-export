@@ -2,24 +2,6 @@
 # basic example of using this module; really as much for dev/testing as a real example of practical
 # usage
 
-terraform {
-  backend "local" {
-    path = "terraform.tfstate"
-  }
-
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 5.0"
-    }
-  }
-}
-
-provider "google" {
-
-}
-
-
 module "worklytics_export" {
   source = "../../"
 
