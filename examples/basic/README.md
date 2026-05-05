@@ -8,7 +8,7 @@ developing the module itself.
 ## Usage for Development
 
 Within `examples/basic/` (eg, here), create a `terraform.tfvars` file with the following content,
-customizing your Worklytics's tenant SA ass needed.
+customizing your Worklytics's tenant SA as needed.
 
 ```hcl
 bucket_name = "my-bucket"
