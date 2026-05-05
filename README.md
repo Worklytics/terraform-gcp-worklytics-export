@@ -55,8 +55,8 @@ complete outside of Terraform.
 This module requires Terraform >= 1.3. It is tested against Terraform 1.6 through the latest
 released version.
 
-The module requires the `hashicorp/google` provider `>= 5.0, < 8` (compatible with the current
-latest, 7.x). If you find incompatibilities, please open an issue.
+The module requires the `hashicorp/google` provider `>= 5.0` (tested against 5.x, 6.x, and 7.x).
+If you find incompatibilities, please open an issue.
 
 ## Usage Tips
 
