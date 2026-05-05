@@ -14,10 +14,24 @@ terraform {
 }
 
 
+# Worklytics export requires write + overwrite access to the bucket.
+# GCS implements overwrite as delete+create, so the minimum permissions (PoLP) are:
+#   - storage.objects.create  (upload/write new objects)
+#   - storage.objects.delete  (required for in-place overwrite of existing exports)
+#   - storage.objects.list    (needed to enumerate existing objects)
+#
+# `roles/storage.objectAdmin` satisfies these and is the Worklytics-documented role, but
+# also includes storage.objects.get/update/getIamPolicy/setIamPolicy which aren't required.
+# If you prefer tighter permissions, create a custom role with the three permissions above
+# and pass its fully-qualified ID via the `bucket_write_iam_role` variable, e.g.:
+#
+#   bucket_write_iam_role = "projects/my-project/roles/worklyticsExportWriter"
+#
+# See: https://docs.worklytics.co/analytics/data-export/google-cloud-storage
 resource "google_storage_bucket_iam_member" "worklytics_export" {
   bucket = var.bucket_name
   member = "serviceAccount:${var.worklytics_tenant_sa_email}"
-  role   = "roles/storage.objectAdmin"
+  role   = var.bucket_write_iam_role
 }
 
 

@@ -68,6 +68,56 @@ If you wish to export Worklytics data to an existing bucket, use a Terraform imp
 terraform import module.worklytics_export.google_storage_bucket.worklytics_export <bucket_name>
 ```
 
+### IAM Permissions
+
+By default this module grants `roles/storage.objectAdmin` to the Worklytics tenant service account
+on your bucket, which is the role specified in the
+[Worklytics data export documentation](https://docs.worklytics.co/analytics/data-export/google-cloud-storage).
+
+**Why not a narrower role?** GCS implements object overwrite as *delete + create* internally, so
+`storage.objects.delete` is required alongside `storage.objects.create`. The narrower
+`roles/storage.objectCreator` omits delete permission and will fail on re-exports.
+
+**Minimum required permissions (PoLP):**
+
+| Permission | Purpose |
+|---|---|
+| `storage.objects.create` | Upload/write export files |
+| `storage.objects.delete` | Required for overwrite (GCS delete+create model) |
+| `storage.objects.list` | Enumerate objects in the bucket |
+
+`roles/storage.objectAdmin` includes these three plus `storage.objects.get`,
+`storage.objects.update`, `storage.objects.getIamPolicy`, and `storage.objects.setIamPolicy`,
+none of which are needed by Worklytics.
+
+**Using a custom role instead:**
+
+If your security posture requires PoLP, create a custom role and pass its ID via the
+`bucket_write_iam_role` variable:
+
+```hcl
+resource "google_project_iam_custom_role" "worklytics_export_writer" {
+  role_id     = "worklyticsExportWriter"
+  title       = "Worklytics Export Writer"
+  description = "Minimum permissions for Worklytics to write data exports to GCS."
+  permissions = [
+    "storage.objects.create",
+    "storage.objects.delete",
+    "storage.objects.list",
+  ]
+}
+
+module "worklytics-export" {
+  source  = "Worklytics/worklytics-export/gcp"
+  version = "~> 0.5.0"
+
+  worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_write_iam_role            = google_project_iam_custom_role.worklytics_export_writer.id
+}
+```
+
+
 ## Development
 
 This module is written and maintained by [Worklytics, Co.](https://worklytics.co/) and intended to
