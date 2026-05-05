@@ -1,4 +1,4 @@
-name: trivy
+name: terraform_security
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   trivy_scan:
-    name: 'Trivy IaC scan'
+    name: 'Terraform security scan (Trivy)'
     runs-on: ubuntu-latest
     permissions:
       contents: read
