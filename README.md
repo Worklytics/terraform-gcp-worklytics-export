@@ -23,7 +23,7 @@ resource "google_storage_bucket" "worklytics_export" {
 
 module "worklytics-export" {
   source  = "terraform-gcp-worklytics-export"
-  version = "~> 0.2.0"
+  version = "~> 0.5.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
@@ -34,7 +34,7 @@ module "worklytics-export" {
 via GitHub:
 ```hcl
 module "worklytics-export" {
-  source  = "git::https://github.com/worklytics/terraform-gcp-worklytics-export/?ref=v0.1.0"
+  source  = "git::https://github.com/worklytics/terraform-gcp-worklytics-export/?ref=v0.5.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
@@ -52,11 +52,11 @@ complete outside of Terraform.
 
 ## Compatibility
 
-This module is meant for use with Terraform 1.1+. If you find incompatibilities using Terraform >=
-1.1, please open an issue.
+This module requires Terraform >= 1.3. It is tested against Terraform 1.6 through the latest
+released version.
 
-As of August 2024, we run integration tests on the latest Terraform versions 1.6-1.9 (everything
-released within the past year).
+The module requires the `hashicorp/google` provider `>= 5.0, < 8` (compatible with the current
+latest, 7.x). If you find incompatibilities, please open an issue.
 
 ## Usage Tips
 

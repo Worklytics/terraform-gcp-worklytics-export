@@ -1,3 +1,17 @@
+terraform {
+  required_version = ">= 1.3, < 2"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 5.0, < 8"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.0, < 3"
+    }
+  }
+}
 
 
 resource "google_storage_bucket_iam_member" "worklytics_export" {

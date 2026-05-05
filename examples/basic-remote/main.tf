@@ -8,7 +8,7 @@ terraform {
 
 module "worklytics_export" {
   source  = "terraform-gcp-worklytics-export"
-  version = "~> 0.1.0"
+  version = "~> 0.5.0"
 
   bucket_name                = var.bucket_name
   worklytics_tenant_sa_email = var.worklytics_tenant_sa_email

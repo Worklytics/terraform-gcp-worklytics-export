@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        terraform_version: [ '~1.6.0', '~1.7.0', '~1.8.0', '~1.9.0', 'latest' ] # haven't seen < 1.4 in the wild, so limit for sanity
+        terraform_version: [ '~1.6.0', '~1.7.0', '~1.8.0', '~1.9.0', '~1.10.0', '~1.11.0', '~1.12.0', '~1.13.0', '~1.14.0', '~1.15.0', 'latest' ] # haven't seen < 1.6 in the wild, so limit for sanity
     permissions:
       contents: 'read'
       id-token: 'write'
