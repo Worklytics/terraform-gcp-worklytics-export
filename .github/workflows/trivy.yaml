@@ -30,11 +30,10 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH,MEDIUM
-          exit-code: '0'          # don't fail the step; let the upload + summary decide
-          trivyignores: .trivyignore   # optional: add this file to the repo to suppress false positives
+          exit-code: '0'          # don't fail the step; let the upload + table pass decide
 
       - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-results.sarif
