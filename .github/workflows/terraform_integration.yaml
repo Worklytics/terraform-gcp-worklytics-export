@@ -8,10 +8,14 @@ on:
       - 'rc-*'
 
 jobs:
-  tf_integration:
-    name: 'Terraform integration (tf ${{ matrix.terraform_version }}, google ~> ${{ matrix.google_provider_major }}.0)'
+  # Parallel matrix: init/validate/plan only. Do NOT apply/destroy here — every matrix
+  # cell targets the same bucket IAM member, so concurrent apply/destroy races and
+  # fail-fast cancels the rest of the matrix.
+  tf_compat:
+    name: 'Terraform plan (tf ${{ matrix.terraform_version }}, google ~> ${{ matrix.google_provider_major }}.0)'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         terraform_version: [ '~1.6.0', '~1.7.0', '~1.8.0', '~1.9.0', '~1.10.0', '~1.11.0', '~1.12.0', '~1.13.0', '~1.14.0', '~1.15.0', 'latest' ] # haven't seen < 1.6 in the wild, so limit for sanity
         google_provider_major: [ '5', '6', '7' ] # major versions to test against (module requires >= 5.0)
@@ -19,11 +23,9 @@ jobs:
       contents: 'read'
       id-token: 'write'
     env:
-      WORKFLOW: 'integration'
       CI_SA_EMAIL: gh-actions-tf-gcp-export@worklytics-corp.iam.gserviceaccount.com
       GCP_IDENTITY_POOL: 'projects/432357880585/locations/global/workloadIdentityPools/github-actions/providers/github'
       EXAMPLE_TENANT_SA_EMAIL: w8s-export-tf-ci-tenant@worklytics-ci.iam.gserviceaccount.com
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUCKET_NAME: terraform-gcp-worklytics-export-ci
     steps:
 
@@ -71,11 +73,57 @@ jobs:
           }
           EOF
 
+      - name: 'Terraform init / validate / plan'
+        working-directory: examples/basic
+        run: |
+          terraform init
+          terraform validate
+          terraform plan -input=false \
+            -var="bucket_name=${{ env.BUCKET_NAME }}" \
+            -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
+
+  # Single end-to-end apply → GCS write → destroy against the shared CI bucket.
+  tf_e2e:
+    name: 'Terraform e2e (apply + gcs write + destroy)'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    env:
+      WORKFLOW: 'integration'
+      CI_SA_EMAIL: gh-actions-tf-gcp-export@worklytics-corp.iam.gserviceaccount.com
+      GCP_IDENTITY_POOL: 'projects/432357880585/locations/global/workloadIdentityPools/github-actions/providers/github'
+      EXAMPLE_TENANT_SA_EMAIL: w8s-export-tf-ci-tenant@worklytics-ci.iam.gserviceaccount.com
+      BUCKET_NAME: terraform-gcp-worklytics-export-ci
+    steps:
+
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: 'setup Terraform'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+          terraform_wrapper: false
+
+      - id: 'auth-gcp'
+        name: 'Authenticate to Google Cloud'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_IDENTITY_POOL }}
+          service_account: ${{ env.CI_SA_EMAIL }}
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 483.0.0'
+
       - name: 'Terraform - integration test examples/basic apply'
         id: terraform_apply
         working-directory: examples/basic
         run: |
-          echo "ci_run=${{ env.WORKLFLOW }}_$(echo -n "${{ matrix.terraform_version }}_${{ matrix.google_provider_major }}_${{ env.timestamp}}" | sha1sum | cut -c1-12)" >> $GITHUB_OUTPUT
+          CI_RUN="${{ env.WORKFLOW }}_${{ github.run_id }}_${{ github.run_attempt }}"
+          echo "ci_run=${CI_RUN}" >> "$GITHUB_OUTPUT"
           terraform init
           terraform apply -auto-approve \
             -var="bucket_name=${{ env.BUCKET_NAME }}" \
@@ -83,14 +131,18 @@ jobs:
 
       - name: 'Terraform - integration test examples/basic gcs write'
         run: |
-          DATE=
           ./test/rsync.sh ${{ env.EXAMPLE_TENANT_SA_EMAIL }} ${{ env.BUCKET_NAME }} ${{ steps.terraform_apply.outputs.ci_run }}
 
       - name: 'Terraform - integration test examples/basic terraform destroy'
         if: always() # try to force this to ALWAYS happen, no matter if previous stuff failed
         working-directory: examples/basic
         run: |
-          gsutil -m rm -r gs://${{ env.BUCKET_NAME }}/${{ steps.terraform_apply.outputs.ci_run }}/*
-          terraform destroy -auto-approve \
-            -var="bucket_name=${{ env.BUCKET_NAME }}" \
-            -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
+          CI_RUN="${{ steps.terraform_apply.outputs.ci_run }}"
+          if [ -n "${CI_RUN}" ]; then
+            gsutil -m rm -r "gs://${{ env.BUCKET_NAME }}/${CI_RUN}/*" || true
+          fi
+          if [ -f terraform.tfstate ] || [ -f terraform.tfstate.backup ]; then
+            terraform destroy -auto-approve \
+              -var="bucket_name=${{ env.BUCKET_NAME }}" \
+              -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
+          fi
