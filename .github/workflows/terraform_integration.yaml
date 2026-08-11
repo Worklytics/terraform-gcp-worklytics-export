@@ -149,3 +149,17 @@ jobs:
               -var="bucket_name=${{ env.BUCKET_NAME }}" \
               -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
           fi
+
+  # Branch protection requires a check named exactly "Terraform integration".
+  integration_gate:
+    name: Terraform integration
+    needs: [tf_compat, tf_e2e]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Require plan matrix + e2e success
+        run: |
+          echo "tf_compat=${{ needs.tf_compat.result }}"
+          echo "tf_e2e=${{ needs.tf_e2e.result }}"
+          test "${{ needs.tf_compat.result }}" = "success"
+          test "${{ needs.tf_e2e.result }}" = "success"

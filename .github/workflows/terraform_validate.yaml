@@ -1,7 +1,11 @@
 name: terraform_validate
 
 on:
-  [push]
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'rc-*'
 
 jobs:
   tf_validate:
@@ -29,3 +33,15 @@ jobs:
         run: |
           terraform init
           terraform validate
+
+  # Branch protection requires a check named exactly "Terraform validate".
+  validate_gate:
+    name: Terraform validate
+    needs: [tf_validate]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Require validate matrix success
+        run: |
+          echo "tf_validate=${{ needs.tf_validate.result }}"
+          test "${{ needs.tf_validate.result }}" = "success"
