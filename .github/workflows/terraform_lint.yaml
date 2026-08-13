@@ -5,7 +5,8 @@ on:
 
 jobs:
   tf_lint:
-    name: 'Terraform lint (on tf ${{ matrix.terraform_version }})'
+    # 'latest' must be named exactly 'Terraform lint' to satisfy branch protection
+    name: ${{ matrix.terraform_version == 'latest' && 'Terraform lint' || format('Terraform lint (on tf {0})', matrix.terraform_version) }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
