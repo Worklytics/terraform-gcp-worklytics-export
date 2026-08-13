@@ -6,7 +6,7 @@ on:
 jobs:
   tf_validate:
     # 'latest' must be named exactly 'Terraform validate' to satisfy branch protection
-    name: Terraform validate${{ matrix.terraform_version == 'latest' && '' || format(' (on tf {0})', matrix.terraform_version) }}
+    name: ${{ matrix.terraform_version == 'latest' && 'Terraform validate' || format('Terraform validate (on tf {0})', matrix.terraform_version) }}
     runs-on: ubuntu-latest
     strategy:
       matrix:

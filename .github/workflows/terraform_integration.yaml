@@ -10,7 +10,7 @@ on:
 jobs:
   tf_integration:
     # 'latest' must be named exactly 'Terraform integration' to satisfy branch protection
-    name: Terraform integration${{ matrix.terraform_version == 'latest' && '' || format(' (on tf {0})', matrix.terraform_version) }}
+    name: ${{ matrix.terraform_version == 'latest' && 'Terraform integration' || format('Terraform integration (on tf {0})', matrix.terraform_version) }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
