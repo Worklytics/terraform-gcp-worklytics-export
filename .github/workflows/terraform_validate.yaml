@@ -1,25 +1,29 @@
 name: terraform_validate
 
 on:
-  [push]
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'rc-*'
 
 jobs:
   tf_validate:
-    # 'latest' must be named exactly 'Terraform validate' to satisfy branch protection
-    name: ${{ matrix.terraform_version == 'latest' && 'Terraform validate' || format('Terraform validate (on tf {0})', matrix.terraform_version) }}
+    name: 'Terraform validate (on tf ${{ matrix.terraform_version }})'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
+      max-parallel: 8
       matrix:
-        terraform_version: [ '~1.4.0', '~1.5.0', '~1.6.0', '~1.7.0', '~1.8.0', '~1.9.0', 'latest' ]
+        terraform_version: [ '~1.3.0', '~1.4.0', '~1.5.0', '~1.6.0', '~1.7.0', '~1.8.0', '~1.9.0', '~1.10.0', '~1.11.0', '~1.12.0', '~1.13.0', '~1.14.0', '~1.15.0', 'latest' ]
     permissions:
       contents: 'read'
-      id-token: 'write'
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 'setup Terraform'
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ matrix.terraform_version }}
 
@@ -28,3 +32,15 @@ jobs:
         run: |
           terraform init
           terraform validate
+
+  # Branch protection requires a check named exactly "Terraform validate".
+  validate_gate:
+    name: Terraform validate
+    needs: [tf_validate]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Require validate matrix success
+        run: |
+          echo "tf_validate=${{ needs.tf_validate.result }}"
+          test "${{ needs.tf_validate.result }}" = "success"

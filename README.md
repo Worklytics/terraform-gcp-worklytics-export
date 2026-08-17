@@ -22,8 +22,8 @@ resource "google_storage_bucket" "worklytics_export" {
 }
 
 module "worklytics-export" {
-  source  = "terraform-gcp-worklytics-export"
-  version = "~> 0.2.0"
+  source  = "Worklytics/worklytics-export/gcp"
+  version = "~> 1.0.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
@@ -34,7 +34,7 @@ module "worklytics-export" {
 via GitHub:
 ```hcl
 module "worklytics-export" {
-  source  = "git::https://github.com/worklytics/terraform-gcp-worklytics-export/?ref=v0.1.0"
+  source  = "git::https://github.com/worklytics/terraform-gcp-worklytics-export/?ref=v1.0.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
@@ -52,11 +52,23 @@ complete outside of Terraform.
 
 ## Compatibility
 
-This module is meant for use with Terraform 1.1+. If you find incompatibilities using Terraform >=
-1.1, please open an issue.
+This module requires Terraform >= 1.3. It is tested against Terraform 1.6 through the latest
+released version.
 
-As of August 2024, we run integration tests on the latest Terraform versions 1.6-1.9 (everything
-released within the past year).
+The module requires the `hashicorp/google` provider `>= 6.0` (tested against 6.x and 7.x).
+Google provider 5.x is no longer maintained, so 1.0 drops it. If you find incompatibilities,
+please open an issue.
+
+### Upgrading to 1.0
+
+1.0 is the first stable release. From 0.x:
+
+- Require `hashicorp/google` `>= 6.0` (5.x is unmaintained).
+- Require Terraform `>= 1.3`.
+- Optional `bucket_write_iam_role` if you want a custom role instead of
+  `roles/storage.objectAdmin` (default is unchanged).
+
+Pin the module with `version = "~> 1.0.0"`.
 
 ## Usage Tips
 
@@ -68,10 +80,60 @@ If you wish to export Worklytics data to an existing bucket, use a Terraform imp
 terraform import module.worklytics_export.google_storage_bucket.worklytics_export <bucket_name>
 ```
 
+### IAM Permissions
+
+By default this module grants `roles/storage.objectAdmin` to the Worklytics tenant service account
+on your bucket, which is the role specified in the
+[Worklytics data export documentation](https://docs.worklytics.co/analytics/data-export/google-cloud-storage).
+
+**Why not a narrower role?** GCS implements object overwrite as *delete + create* internally, so
+`storage.objects.delete` is required alongside `storage.objects.create`. The narrower
+`roles/storage.objectCreator` omits delete permission and will fail on re-exports.
+
+**Minimum required permissions (PoLP):**
+
+| Permission | Purpose |
+|---|---|
+| `storage.objects.create` | Upload/write export files |
+| `storage.objects.delete` | Required for overwrite (GCS delete+create model) |
+| `storage.objects.list` | Enumerate objects in the bucket |
+
+`roles/storage.objectAdmin` includes these three plus `storage.objects.get`,
+`storage.objects.update`, `storage.objects.getIamPolicy`, and `storage.objects.setIamPolicy`,
+none of which are needed by Worklytics.
+
+**Using a custom role instead:**
+
+If your security posture requires PoLP, create a custom role and pass its ID via the
+`bucket_write_iam_role` variable:
+
+```hcl
+resource "google_project_iam_custom_role" "worklytics_export_writer" {
+  role_id     = "worklyticsExportWriter"
+  title       = "Worklytics Export Writer"
+  description = "Minimum permissions for Worklytics to write data exports to GCS."
+  permissions = [
+    "storage.objects.create",
+    "storage.objects.delete",
+    "storage.objects.list",
+  ]
+}
+
+module "worklytics-export" {
+  source  = "Worklytics/worklytics-export/gcp"
+  version = "~> 1.0.0"
+
+  worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_write_iam_role      = google_project_iam_custom_role.worklytics_export_writer.id
+}
+```
+
+
 ## Development
 
 This module is written and maintained by [Worklytics, Co.](https://worklytics.co/) and intended to
-guide our customers in setting up their own infra to export data from Worklytics to AWS.
+guide our customers in setting up their own infra to export data from Worklytics to GCS.
 
 As this is [published as a Terraform module](https://developer.hashicorp.com/terraform/registry/modules/publish),
 we will strive to follow [standard Terraform module structure](https://developer.hashicorp.com/terraform/language/modules/develop/structure)

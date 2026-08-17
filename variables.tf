@@ -25,3 +25,30 @@ variable "todos_as_local_files" {
   description = "whether to render TODOs as flat files"
   default     = true
 }
+
+variable "bucket_write_iam_role" {
+  type        = string
+  description = <<-EOT
+    IAM role to grant the Worklytics tenant service account on the export bucket.
+    Defaults to roles/storage.objectAdmin (the Worklytics-documented role).
+
+    Minimum permissions required (PoLP) — use these to create a custom role if you
+    prefer not to grant the broader objectAdmin:
+      - storage.objects.create  (write/upload export files)
+      - storage.objects.delete  (required for overwrite; GCS models overwrite as delete+create)
+      - storage.objects.list    (enumerate objects in bucket)
+
+    Pass a custom role as a fully-qualified ID, e.g.:
+      bucket_write_iam_role = "projects/my-project/roles/worklyticsExportWriter"
+  EOT
+  default     = "roles/storage.objectAdmin"
+
+  validation {
+    condition = can(regex(
+      "^(roles/|projects/[^/]+/roles/|organizations/[^/]+/roles/)[a-zA-Z0-9_.]+$",
+      var.bucket_write_iam_role
+    ))
+    error_message = "bucket_write_iam_role must be a built-in role (roles/...) or a custom role (projects/{project}/roles/{id} or organizations/{org}/roles/{id})."
+  }
+}
+
