@@ -20,8 +20,13 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
+      # Use the v-prefixed tag (v0.36.0), not unprefixed 0.x tags. Those older
+      # tags were hijacked in the March 2026 trivy-action supply-chain incident
+      # (GHSA-69fq-xp46-6x23); v0.35.0+ was not compromised.
       - name: Run Trivy (SARIF output)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
