@@ -11,7 +11,8 @@ Within `examples/basic/` (eg, here), create a `terraform.tfvars` file with the f
 customizing your Worklytics's tenant SA as needed.
 
 ```hcl
-bucket_name = "my-bucket"
+bucket_name                = "my-bucket"
+create_bucket              = false
 worklytics_tenant_sa_email = "my-worklytics-tenant-sa@eval-engin.iam.gserviceaccount.com"
 
 ```

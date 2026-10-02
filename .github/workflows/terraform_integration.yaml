@@ -83,6 +83,7 @@ jobs:
           terraform validate
           terraform plan -input=false \
             -var="bucket_name=${{ env.BUCKET_NAME }}" \
+            -var="create_bucket=false" \
             -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
 
   # Single end-to-end apply → GCS write → destroy against the shared CI bucket.
@@ -130,6 +131,7 @@ jobs:
           terraform init
           terraform apply -auto-approve \
             -var="bucket_name=${{ env.BUCKET_NAME }}" \
+            -var="create_bucket=false" \
             -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
 
       - name: 'Terraform - integration test examples/basic gcs write'
@@ -147,6 +149,7 @@ jobs:
           if [ -f terraform.tfstate ] || [ -f terraform.tfstate.backup ]; then
             terraform destroy -auto-approve \
               -var="bucket_name=${{ env.BUCKET_NAME }}" \
+              -var="create_bucket=false" \
               -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
           fi
 

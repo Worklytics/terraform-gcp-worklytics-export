@@ -3,8 +3,8 @@
 [![Latest Release](https://img.shields.io/github/v/release/Worklytics/terraform-gcp-worklytics-export)](https://github.com/Worklytics/terraform-gcp-worklytics-export/releases/latest)
 [![tests](https://img.shields.io/github/actions/workflow/status/Worklytics/terraform-gcp-worklytics-export/terraform_integration.yaml?label=tests)](https://github.com/Worklytics/terraform-gcp-worklytics-export/actions?query=branch%3Amain)
 
-This module sets IAM policy to support exporting data from Worklytics to a pre-existing GCS bucket
-and provisions instructions for doing so.
+This module creates a GCS bucket (or adopts an existing one) and sets IAM policy to support
+exporting data from Worklytics, and provisions instructions for doing so.
 
 It is published in the [Terraform Registry](https://registry.terraform.io/modules/Worklytics/worklytics-export/gcp/latest).
 
@@ -15,19 +15,14 @@ and provide for potential future provisioning of the connection from the Worklyt
 
 from Terraform registry:
 ```hcl
-resource "google_storage_bucket" "worklytics_export" {
-  name     = "worklytics-export"
-
-  # customize as needed; see https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#argument-reference
-}
-
 module "worklytics-export" {
   source  = "Worklytics/worklytics-export/gcp"
   version = "~> 1.0.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_name                = "acme-co-worklytics-export"
+  bucket_location            = "US"
 }
 ```
 
@@ -38,11 +33,17 @@ module "worklytics-export" {
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_name                = "acme-co-worklytics-export"
+  bucket_location            = "US"
 }
 ```
 
 ## Outputs
+
+#### `worklytics_export_bucket`
+
+The GCS bucket created for Worklytics export (when `create_bucket` is true). Useful to compose
+with other `google_storage_bucket_*` resources to configure retention, encryption, etc.
 
 #### `todo_markdown`
 
@@ -67,6 +68,9 @@ please open an issue.
 - Require Terraform `>= 1.3`.
 - Optional `bucket_write_iam_role` if you want a custom role instead of
   `roles/storage.objectAdmin` (default is unchanged).
+- The module now creates the GCS bucket by default. Pass your desired exact name via
+  `bucket_name` (not a prefix) and `bucket_location`. If you already manage the bucket
+  outside this module, set `create_bucket = false`.
 
 Pin the module with `version = "~> 1.0.0"`.
 
@@ -74,10 +78,37 @@ Pin the module with `version = "~> 1.0.0"`.
 
 ### Existing Bucket
 
-If you wish to export Worklytics data to an existing bucket, use a Terraform import as follows:
+To adopt an existing GCS bucket, set `bucket_name` to the **exact name** of that bucket and import
+it into Terraform state. Import alone is not sufficient — the module must be configured with the
+matching bucket name (and location) before import.
+
+```hcl
+module "worklytics-export" {
+  source  = "Worklytics/worklytics-export/gcp"
+  version = "~> 1.0.0"
+
+  worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = "my-existing-bucket"
+  bucket_location            = "US" # must match the existing bucket's location
+}
+```
 
 ```bash
-terraform import module.worklytics_export.google_storage_bucket.worklytics_export <bucket_name>
+terraform import 'module.worklytics-export.google_storage_bucket.worklytics_export[0]' my-existing-bucket
+```
+
+If you prefer not to manage the bucket resource in Terraform and only need IAM bindings, set
+`create_bucket = false` and pass the existing bucket name via `bucket_name`:
+
+```hcl
+module "worklytics-export" {
+  source  = "Worklytics/worklytics-export/gcp"
+  version = "~> 1.0.0"
+
+  worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  create_bucket              = false
+  bucket_name                = "my-existing-bucket"
+}
 ```
 
 ### IAM Permissions
@@ -124,7 +155,8 @@ module "worklytics-export" {
   version = "~> 1.0.0"
 
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_name                = "acme-co-worklytics-export"
+  bucket_location            = "US"
   bucket_write_iam_role      = google_project_iam_custom_role.worklytics_export_writer.id
 }
 ```
