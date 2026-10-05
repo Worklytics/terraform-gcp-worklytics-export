@@ -83,6 +83,9 @@ jobs:
           terraform init
           terraform validate
           terraform import -input=false \
+            -var="bucket_name=${{ env.BUCKET_NAME }}" \
+            -var="bucket_location=${{ env.BUCKET_LOCATION }}" \
+            -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}" \
             'module.worklytics_export.google_storage_bucket.worklytics_export' \
             '${{ env.BUCKET_NAME }}' || true
           terraform plan -input=false \
@@ -135,8 +138,11 @@ jobs:
           echo "ci_run=${CI_RUN}" >> "$GITHUB_OUTPUT"
           terraform init
           terraform import -input=false \
+            -var="bucket_name=${{ env.BUCKET_NAME }}" \
+            -var="bucket_location=${{ env.BUCKET_LOCATION }}" \
+            -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}" \
             'module.worklytics_export.google_storage_bucket.worklytics_export' \
-            '${{ env.BUCKET_NAME }}' || true
+            '${{ env.BUCKET_NAME }}'
           terraform apply -auto-approve \
             -var="bucket_name=${{ env.BUCKET_NAME }}" \
             -var="bucket_location=${{ env.BUCKET_LOCATION }}" \
