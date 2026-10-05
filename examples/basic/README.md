@@ -12,7 +12,6 @@ customizing your Worklytics's tenant SA as needed.
 
 ```hcl
 bucket_name                = "my-bucket"
-bucket_location            = "US"
 worklytics_tenant_sa_email = "my-worklytics-tenant-sa@eval-engin.iam.gserviceaccount.com"
 
 ```

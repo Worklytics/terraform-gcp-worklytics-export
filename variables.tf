@@ -19,6 +19,12 @@ variable "bucket_name" {
 variable "bucket_location" {
   type        = string
   description = "GCS location for the export bucket (eg 'US', 'EU', 'us-central1')."
+  default     = "US"
+}
+
+variable "worklytics_tenant_sa_email" {
+  type        = string
+  description = "Email address of your Worklytics tenant's service account (obtain from Worklytics App)."
 }
 
 variable "worklytics_host" {
@@ -73,13 +79,6 @@ variable "storage_access_log_prefix" {
   default     = "log/"
 }
 
-# GCP-specific: tenant auth uses a service account email (vs numeric tenant ID on AWS).
-variable "worklytics_tenant_sa_email" {
-  type        = string
-  description = "Email address of your Worklytics tenant's service account (obtain from Worklytics App)."
-}
-
-# GCP-specific: IAM role on the bucket (AWS module uses an inline IAM policy instead).
 variable "bucket_write_iam_role" {
   type        = string
   description = <<-EOT

@@ -38,6 +38,9 @@ resource "random_id" "bucket_suffix" {
 #   bucket_write_iam_role = "projects/my-project/roles/worklyticsExportWriter"
 #
 # See: https://docs.worklytics.co/analytics/data-export/google-cloud-storage
+#trivy:ignore:AVD-GCP-0066 - CMEK left to customer via worklytics_export_bucket output
+#trivy:ignore:AVD-GCP-0077 - access logging optional via storage_access_log_bucket
+#trivy:ignore:AVD-GCP-0078 - versioning optional via enable_bucket_versioning
 resource "google_storage_bucket" "worklytics_export" {
   name     = local.export_bucket_name
   location = local.export_bucket_location

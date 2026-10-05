@@ -23,7 +23,6 @@ module "worklytics-export" {
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_location            = "US"
 }
 ```
 
@@ -34,12 +33,10 @@ module "worklytics-export" {
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_location            = "US"
 }
 ```
 
-By default the bucket name is derived from `resource_name_prefix` (default `worklytics-export-`),
-analogous to the [AWS module](https://github.com/Worklytics/terraform-aws-worklytics-export).
+By default the bucket name is derived from `resource_name_prefix` (default `worklytics-export-`).
 Set `bucket_name` for an exact name or when adopting an existing bucket (see
 [Existing Bucket](#existing-bucket)).
 
@@ -73,35 +70,18 @@ please open an issue.
 - Require Terraform `>= 1.3`.
 - Optional `bucket_write_iam_role` if you want a custom role instead of
   `roles/storage.objectAdmin` (default is unchanged).
-- The module now creates the GCS bucket by default. Set `bucket_location` and let
-  `resource_name_prefix` derive the bucket name, or set `bucket_name` for an exact name.
+- The module now creates the GCS bucket by default. Let `resource_name_prefix` derive the bucket
+  name, or set `bucket_name` for an exact name.
 
 Pin the module with `version = "~> 1.0.0"`.
-
-### Variable alignment with AWS module
-
-Cross-cloud variable names omit platform prefixes (`aws_s3_*`, `gcp_*`) — the module implies the
-platform. Target names below; the AWS module is being updated to match.
-
-| Concept | GCP (this module) | AWS (`terraform-aws-worklytics-export`) |
-|---|---|---|
-| Name prefix | `resource_name_prefix` | `resource_name_prefix` |
-| Exact bucket name | `bucket_name` | — (use import) |
-| Bucket location | `bucket_location` | — |
-| Tenant identity | `worklytics_tenant_sa_email` | `worklytics_tenant_id` |
-| Uniform access / public access block | `enable_bucket_uniform_bucket_level_access` | `enable_bucket_public_access_block` (target) |
-| Versioning | `enable_bucket_versioning` | `enable_bucket_versioning` (target) |
-| Access log destination | `storage_access_log_bucket` | `storage_access_log_bucket` (target) |
-| Access log prefix | `storage_access_log_prefix` | `storage_access_log_prefix` (target) |
-| Bucket write IAM | `bucket_write_iam_role` | — (inline IAM policy) |
 
 ## Usage Tips
 
 ### Existing Bucket
 
-To adopt an existing GCS bucket (as in the AWS module), set `bucket_name` to the **exact name**
-of that bucket and import it into Terraform state. Import alone is not sufficient — the module
-must be configured with the matching bucket name (and location) before import.
+To adopt an existing GCS bucket, set `bucket_name` to the **exact name** of that bucket and import
+it into Terraform state. Import alone is not sufficient — the module must be configured with the
+matching bucket name before import.
 
 ```hcl
 module "worklytics-export" {
@@ -110,7 +90,6 @@ module "worklytics-export" {
 
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
   bucket_name                = "my-existing-bucket"
-  bucket_location            = "US" # must match the existing bucket's location
 }
 ```
 
@@ -201,7 +180,6 @@ module "worklytics-export" {
   version = "~> 1.0.0"
 
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_location            = "US"
   bucket_write_iam_role      = google_project_iam_custom_role.worklytics_export_writer.id
 }
 ```

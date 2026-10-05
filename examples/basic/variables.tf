@@ -13,6 +13,7 @@ variable "bucket_name" {
 variable "bucket_location" {
   type        = string
   description = "GCS location for the export bucket (eg 'US', 'EU', 'us-central1')."
+  default     = "US"
 }
 
 variable "worklytics_tenant_sa_email" {
