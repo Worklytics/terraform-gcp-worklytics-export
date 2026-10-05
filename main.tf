@@ -23,6 +23,38 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
+locals {
+  bucket_name_prefix_normalized = replace(lower(var.resource_name_prefix), "_", "-")
+
+  # bucket_name when set; otherwise derive from resource_name_prefix.
+  export_bucket_name = var.bucket_name != null ? var.bucket_name : "${local.bucket_name_prefix_normalized}${random_id.bucket_suffix[0].hex}"
+
+  export_bucket_location = var.bucket_location
+
+  todo_content = <<EOT
+# TODO : Configure Data Export in Worklytics
+
+1. Ensure you're authenticated with Worklytics. Either sign-in at [https://${var.worklytics_host}](https://${var.worklytics_host})
+  with your organization's SSO provider *or* request OTP link from your Worklytics support team.
+2. Visit `https://${var.worklytics_host}/analytics/data-export/connect?type=GOOGLE_CLOUD_STORAGE&bucket=${local.export_bucket_name}`
+3. Review any additional settings (such as the Dataset type you'd like to export) and adjust
+  values as you see fit, then click "Create Data Export".
+
+Alternatively, you may follow the manual instructions below:
+
+1. Visit [https://${var.worklytics_host}/analytics/data-export](https://${var.worklytics_host}/analytics/data-export)
+  (or login into Worklytics, and navigate to Manage --> Export Data).
+2. Click on the 'Create New Data Export' button in the upper right.
+3. Fill in the form with the following values:
+  - **Data Export Name** - choose a name that will help you identify this export in the future.
+  - **Data Export Type** - choose the type of data you'd like to export. Check our
+    [Data Export Documentation](https://${var.worklytics_host}/docs/data-export) for a complete
+    description of all the available datasets.
+  - **Data Destination** - choose 'Google Cloud Storage', use `${local.export_bucket_name}`
+    for the **Bucket** field
+
+EOT
+}
 
 # Worklytics export requires write + overwrite access to the bucket.
 # GCS implements overwrite as delete+create, so the minimum permissions (PoLP) are:
@@ -76,34 +108,6 @@ resource "google_storage_bucket_iam_member" "worklytics_export" {
   member = "serviceAccount:${var.worklytics_tenant_sa_email}"
   role   = var.bucket_write_iam_role
 }
-
-
-locals {
-  todo_content = <<EOT
-# TODO : Configure Data Export in Worklytics
-
-1. Ensure you're authenticated with Worklytics. Either sign-in at [https://${var.worklytics_host}](https://${var.worklytics_host})
-  with your organization's SSO provider *or* request OTP link from your Worklytics support team.
-2. Visit `https://${var.worklytics_host}/analytics/data-export/connect?type=GOOGLE_CLOUD_STORAGE&bucket=${local.export_bucket_name}`
-3. Review any additional settings (such as the Dataset type you'd like to export) and adjust
-  values as you see fit, then click "Create Data Export".
-
-Alternatively, you may follow the manual instructions below:
-
-1. Visit [https://${var.worklytics_host}/analytics/data-export](https://${var.worklytics_host}/analytics/data-export)
-  (or login into Worklytics, and navigate to Manage --> Export Data).
-2. Click on the 'Create New Data Export' button in the upper right.
-3. Fill in the form with the following values:
-  - **Data Export Name** - choose a name that will help you identify this export in the future.
-  - **Data Export Type** - choose the type of data you'd like to export. Check our
-    [Data Export Documentation](https://${var.worklytics_host}/docs/data-export) for a complete
-    description of all the available datasets.
-  - **Data Destination** - choose 'Google Cloud Storage', use `${local.export_bucket_name}`
-    for the **Bucket** field
-
-EOT
-}
-
 
 resource "local_file" "readme" {
   count = var.todos_as_local_files ? 1 : 0
