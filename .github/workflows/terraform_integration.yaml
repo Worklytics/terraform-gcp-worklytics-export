@@ -30,6 +30,7 @@ jobs:
       GCP_IDENTITY_POOL: 'projects/432357880585/locations/global/workloadIdentityPools/github-actions/providers/github'
       EXAMPLE_TENANT_SA_EMAIL: w8s-export-tf-ci-tenant@worklytics-ci.iam.gserviceaccount.com
       BUCKET_NAME: terraform-gcp-worklytics-export-ci
+      BUCKET_LOCATION: US
     steps:
 
       - name: Check out code
@@ -81,9 +82,12 @@ jobs:
         run: |
           terraform init
           terraform validate
+          terraform import -input=false \
+            'module.worklytics_export.google_storage_bucket.worklytics_export' \
+            '${{ env.BUCKET_NAME }}' || true
           terraform plan -input=false \
             -var="bucket_name=${{ env.BUCKET_NAME }}" \
-            -var="create_bucket=false" \
+            -var="bucket_location=${{ env.BUCKET_LOCATION }}" \
             -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
 
   # Single end-to-end apply → GCS write → destroy against the shared CI bucket.
@@ -99,6 +103,7 @@ jobs:
       GCP_IDENTITY_POOL: 'projects/432357880585/locations/global/workloadIdentityPools/github-actions/providers/github'
       EXAMPLE_TENANT_SA_EMAIL: w8s-export-tf-ci-tenant@worklytics-ci.iam.gserviceaccount.com
       BUCKET_NAME: terraform-gcp-worklytics-export-ci
+      BUCKET_LOCATION: US
     steps:
 
       - name: Check out code
@@ -129,9 +134,12 @@ jobs:
           CI_RUN="${{ env.WORKFLOW }}_${{ github.run_id }}_${{ github.run_attempt }}"
           echo "ci_run=${CI_RUN}" >> "$GITHUB_OUTPUT"
           terraform init
+          terraform import -input=false \
+            'module.worklytics_export.google_storage_bucket.worklytics_export' \
+            '${{ env.BUCKET_NAME }}' || true
           terraform apply -auto-approve \
             -var="bucket_name=${{ env.BUCKET_NAME }}" \
-            -var="create_bucket=false" \
+            -var="bucket_location=${{ env.BUCKET_LOCATION }}" \
             -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
 
       - name: 'Terraform - integration test examples/basic gcs write'
@@ -147,9 +155,10 @@ jobs:
             gsutil -m rm -r "gs://${{ env.BUCKET_NAME }}/${CI_RUN}/*" || true
           fi
           if [ -f terraform.tfstate ] || [ -f terraform.tfstate.backup ]; then
+            terraform state rm 'module.worklytics_export.google_storage_bucket.worklytics_export' || true
             terraform destroy -auto-approve \
               -var="bucket_name=${{ env.BUCKET_NAME }}" \
-              -var="create_bucket=false" \
+              -var="bucket_location=${{ env.BUCKET_LOCATION }}" \
               -var="worklytics_tenant_sa_email=${{ env.EXAMPLE_TENANT_SA_EMAIL }}"
           fi
 

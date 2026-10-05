@@ -10,7 +10,17 @@ terraform {
       source  = "hashicorp/local"
       version = ">= 2.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.0"
+    }
   }
+}
+
+resource "random_id" "bucket_suffix" {
+  count = var.bucket_name == null ? 1 : 0
+
+  byte_length = 4
 }
 
 
@@ -29,12 +39,25 @@ terraform {
 #
 # See: https://docs.worklytics.co/analytics/data-export/google-cloud-storage
 resource "google_storage_bucket" "worklytics_export" {
-  count = var.create_bucket ? 1 : 0
+  name     = local.export_bucket_name
+  location = local.export_bucket_location
 
-  name     = var.bucket_name
-  location = var.bucket_location
+  uniform_bucket_level_access = var.enable_bucket_uniform_bucket_level_access
 
-  uniform_bucket_level_access = true
+  dynamic "versioning" {
+    for_each = var.enable_bucket_versioning ? [1] : []
+    content {
+      enabled = true
+    }
+  }
+
+  dynamic "logging" {
+    for_each = var.storage_access_log_bucket != null ? [1] : []
+    content {
+      log_bucket        = var.storage_access_log_bucket
+      log_object_prefix = var.storage_access_log_prefix
+    }
+  }
 
   lifecycle {
     ignore_changes = [
@@ -46,7 +69,7 @@ resource "google_storage_bucket" "worklytics_export" {
 
 #trivy:ignore:AVD-GCP-0007 - objectAdmin is the documented minimum for GCS export (overwrite requires delete+create); see comment above
 resource "google_storage_bucket_iam_member" "worklytics_export" {
-  bucket = var.bucket_name
+  bucket = local.export_bucket_name
   member = "serviceAccount:${var.worklytics_tenant_sa_email}"
   role   = var.bucket_write_iam_role
 }
@@ -58,7 +81,7 @@ locals {
 
 1. Ensure you're authenticated with Worklytics. Either sign-in at [https://${var.worklytics_host}](https://${var.worklytics_host})
   with your organization's SSO provider *or* request OTP link from your Worklytics support team.
-2. Visit `https://${var.worklytics_host}/analytics/data-export/connect?type=GOOGLE_CLOUD_STORAGE&bucket=${var.bucket_name}`
+2. Visit `https://${var.worklytics_host}/analytics/data-export/connect?type=GOOGLE_CLOUD_STORAGE&bucket=${local.export_bucket_name}`
 3. Review any additional settings (such as the Dataset type you'd like to export) and adjust
   values as you see fit, then click "Create Data Export".
 
@@ -72,7 +95,7 @@ Alternatively, you may follow the manual instructions below:
   - **Data Export Type** - choose the type of data you'd like to export. Check our
     [Data Export Documentation](https://${var.worklytics_host}/docs/data-export) for a complete
     description of all the available datasets.
-  - **Data Destination** - choose 'Google Cloud Storage', use `${var.bucket_name}`
+  - **Data Destination** - choose 'Google Cloud Storage', use `${local.export_bucket_name}`
     for the **Bucket** field
 
 EOT

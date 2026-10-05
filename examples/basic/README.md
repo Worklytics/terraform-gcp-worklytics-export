@@ -12,9 +12,15 @@ customizing your Worklytics's tenant SA as needed.
 
 ```hcl
 bucket_name                = "my-bucket"
-create_bucket              = false
+bucket_location            = "US"
 worklytics_tenant_sa_email = "my-worklytics-tenant-sa@eval-engin.iam.gserviceaccount.com"
 
+```
+
+When using a pre-existing bucket, import it before `terraform apply`:
+
+```shell
+terraform import 'module.worklytics_export.google_storage_bucket.worklytics_export' my-bucket
 ```
 
 Then test the example:
