@@ -10,7 +10,6 @@ module "worklytics_export" {
   source  = "Worklytics/worklytics-export/gcp"
   version = "~> 1.0.0"
 
-  resource_name_prefix                      = var.resource_name_prefix
   bucket_name                               = var.bucket_name
   bucket_location                           = var.bucket_location
   worklytics_tenant_sa_email                = var.worklytics_tenant_sa_email

@@ -1,19 +1,9 @@
 # Variables aligned with terraform-aws-worklytics-export where applicable.
 # Platform-specific prefixes (aws_s3_*, etc.) are omitted — the module implies GCP.
 
-variable "resource_name_prefix" {
-  type        = string
-  description = "Prefix to give to names of infra created by this module, where applicable."
-  default     = "worklytics-export-"
-}
-
 variable "bucket_name" {
   type        = string
-  description = <<-EOT
-    Exact GCS bucket name. When set, used instead of a name derived from resource_name_prefix.
-    Set when adopting an existing bucket (via terraform import) or when you need a specific name.
-  EOT
-  default     = null
+  description = "Name of the GCS bucket to which Worklytics data will be exported (eg 'acme-co-worklytics-export')."
 }
 
 variable "bucket_location" {

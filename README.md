@@ -23,6 +23,7 @@ module "worklytics-export" {
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = "acme-co-worklytics-export"
 }
 ```
 
@@ -33,12 +34,9 @@ module "worklytics-export" {
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = "acme-co-worklytics-export"
 }
 ```
-
-By default the bucket name is derived from `resource_name_prefix` (default `worklytics-export-`).
-Set `bucket_name` for an exact name or when adopting an existing bucket (see
-[Existing Bucket](#existing-bucket)).
 
 ## Outputs
 
@@ -70,8 +68,8 @@ please open an issue.
 - Require Terraform `>= 1.3`.
 - Optional `bucket_write_iam_role` if you want a custom role instead of
   `roles/storage.objectAdmin` (default is unchanged).
-- The module now creates the GCS bucket by default. Let `resource_name_prefix` derive the bucket
-  name, or set `bucket_name` for an exact name.
+- The module now creates the GCS bucket. Set `bucket_name` to the desired name (or import an
+  existing bucket — see [Existing Bucket](#existing-bucket)).
 
 Pin the module with `version = "~> 1.0.0"`.
 
@@ -180,6 +178,7 @@ module "worklytics-export" {
   version = "~> 1.0.0"
 
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = "acme-co-worklytics-export"
   bucket_write_iam_role      = google_project_iam_custom_role.worklytics_export_writer.id
 }
 ```
