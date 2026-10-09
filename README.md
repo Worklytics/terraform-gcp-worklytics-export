@@ -3,31 +3,27 @@
 [![Latest Release](https://img.shields.io/github/v/release/Worklytics/terraform-gcp-worklytics-export)](https://github.com/Worklytics/terraform-gcp-worklytics-export/releases/latest)
 [![tests](https://img.shields.io/github/actions/workflow/status/Worklytics/terraform-gcp-worklytics-export/terraform_integration.yaml?label=tests)](https://github.com/Worklytics/terraform-gcp-worklytics-export/actions?query=branch%3Amain)
 
-This module sets IAM policy to support exporting data from Worklytics to a pre-existing GCS bucket
-and provisions instructions for doing so.
+This module creates a GCS bucket (or adopts an existing one) and sets IAM policy to support
+exporting data from Worklytics, and provisions instructions for doing so.
 
-It is published in the [Terraform Registry](https://registry.terraform.io/modules/Worklytics/worklytics-export/gcp/latest).
+It is published in the
+[Terraform Registry](https://registry.terraform.io/modules/Worklytics/worklytics-export/gcp/latest).
 
-It is arguably too minimal to be its own module, but we did so to make it analogous to [AWS case](https://github.com/Worklytics/terraform-aws-worklytics-export)
-and provide for potential future provisioning of the connection from the Worklytics side.
+It is arguably too minimal to be its own module, but we did so to make it analogous to the
+[AWS module](https://github.com/Worklytics/terraform-aws-worklytics-export) and provide for
+potential future provisioning of the connection from the Worklytics side.
 
 ## Usage
 
 from Terraform registry:
 ```hcl
-resource "google_storage_bucket" "worklytics_export" {
-  name     = "worklytics-export"
-
-  # customize as needed; see https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#argument-reference
-}
-
 module "worklytics-export" {
   source  = "Worklytics/worklytics-export/gcp"
   version = "~> 1.0.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_name                = "acme-co-worklytics-export"
 }
 ```
 
@@ -38,11 +34,16 @@ module "worklytics-export" {
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_name                = "acme-co-worklytics-export"
 }
 ```
 
 ## Outputs
+
+#### `worklytics_export_bucket`
+
+The GCS bucket created for Worklytics export. Useful to compose with other
+`google_storage_bucket_*` resources to configure retention, encryption, etc.
 
 #### `todo_markdown`
 
@@ -67,6 +68,8 @@ please open an issue.
 - Require Terraform `>= 1.3`.
 - Optional `bucket_write_iam_role` if you want a custom role instead of
   `roles/storage.objectAdmin` (default is unchanged).
+- The module now creates the GCS bucket. Set `bucket_name` to the desired name (or import an
+  existing bucket — see [Existing Bucket](#existing-bucket)).
 
 Pin the module with `version = "~> 1.0.0"`.
 
@@ -74,11 +77,62 @@ Pin the module with `version = "~> 1.0.0"`.
 
 ### Existing Bucket
 
-If you wish to export Worklytics data to an existing bucket, use a Terraform import as follows:
+To adopt an existing GCS bucket, set `bucket_name` to the **exact name** of that bucket and import
+it into Terraform state. Import alone is not sufficient — the module must be configured with the
+matching bucket name before import.
+
+```hcl
+module "worklytics-export" {
+  source  = "Worklytics/worklytics-export/gcp"
+  version = "~> 1.0.0"
+
+  worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+  bucket_name                = "my-existing-bucket"
+}
+```
 
 ```bash
-terraform import module.worklytics_export.google_storage_bucket.worklytics_export <bucket_name>
+terraform import 'module.worklytics-export.google_storage_bucket.worklytics_export' my-existing-bucket
 ```
+
+### Customize Uniform Bucket-Level Access
+
+By default, uniform bucket-level access is enabled on the export bucket. To disable and configure
+equivalently outside this module:
+
+```hcl
+module "worklytics-export" {
+  # ...
+  enable_bucket_uniform_bucket_level_access = false
+}
+```
+
+### Enable Bucket Versioning
+
+Versioning is off by default. Enable it via:
+
+```hcl
+module "worklytics-export" {
+  # ...
+  enable_bucket_versioning = true
+}
+```
+
+Or configure versioning yourself against `module.worklytics-export.worklytics_export_bucket`.
+
+### Enable Access Logging
+
+Pass an existing logging destination bucket (and optional prefix) to wire up access logs:
+
+```hcl
+module "worklytics-export" {
+  # ...
+  storage_access_log_bucket = google_storage_bucket.access_logs.name
+  storage_access_log_prefix = "worklytics-export/"
+}
+```
+
+If omitted, you can still attach logging yourself using the module's bucket output.
 
 ### IAM Permissions
 
@@ -124,7 +178,7 @@ module "worklytics-export" {
   version = "~> 1.0.0"
 
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
-  bucket_name                = google_storage_bucket.worklytics_export.name
+  bucket_name                = "acme-co-worklytics-export"
   bucket_write_iam_role      = google_project_iam_custom_role.worklytics_export_writer.id
 }
 ```
@@ -136,7 +190,8 @@ This module is written and maintained by [Worklytics, Co.](https://worklytics.co
 guide our customers in setting up their own infra to export data from Worklytics to GCS.
 
 As this is [published as a Terraform module](https://developer.hashicorp.com/terraform/registry/modules/publish),
-we will strive to follow [standard Terraform module structure](https://developer.hashicorp.com/terraform/language/modules/develop/structure)
+we will strive to follow
+[standard Terraform module structure](https://developer.hashicorp.com/terraform/language/modules/develop/structure)
 and [style conventions](https://developer.hashicorp.com/terraform/language/syntax/style).
 
 See [examples/basic/](examples/basic/) for a simple example of how to use this module.
@@ -157,5 +212,4 @@ Worklytics, you can do the following.
   2. Grant the `roles/storage.objectAdmin` IAM role to your Worklytics Tenant's Service Account
      (obtain from Worklytics) on the bucket.
   3. Create an Export connection via the Worklytics web app.
-
 

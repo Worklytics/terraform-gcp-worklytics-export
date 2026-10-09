@@ -1,6 +1,15 @@
+# Variables aligned with terraform-aws-worklytics-export where applicable.
+# Platform-specific prefixes (aws_s3_*, etc.) are omitted — the module implies GCP.
+
 variable "bucket_name" {
   type        = string
-  description = "Name to be used for GCS bucket to which Worklytics data will be exported (eg 'acme-co-worklytics-export')."
+  description = "Name of the GCS bucket to which Worklytics data will be exported (eg 'acme-co-worklytics-export')."
+}
+
+variable "bucket_location" {
+  type        = string
+  description = "GCS location for the export bucket (eg 'US', 'EU', 'us-central1')."
+  default     = "US"
 }
 
 variable "worklytics_tenant_sa_email" {
@@ -24,6 +33,40 @@ variable "todos_as_local_files" {
   type        = bool
   description = "whether to render TODOs as flat files"
   default     = true
+}
+
+variable "enable_bucket_uniform_bucket_level_access" {
+  type        = bool
+  description = <<-EOT
+    Whether to enable uniform bucket-level access on the export bucket. Set to `false` if you wish
+    to configure something equivalent outside this module.
+  EOT
+  default     = true
+}
+
+variable "enable_bucket_versioning" {
+  type        = bool
+  description = <<-EOT
+    Whether to enable versioning on the export bucket. Set to `false` if you wish to configure
+    something equivalent outside this module.
+  EOT
+  default     = false
+}
+
+variable "storage_access_log_bucket" {
+  type        = string
+  description = <<-EOT
+    Optional destination bucket name for access logs of the export bucket. When `null`, access
+    logging is not configured by this module (you may add logging yourself using the
+    `worklytics_export_bucket` output).
+  EOT
+  default     = null
+}
+
+variable "storage_access_log_prefix" {
+  type        = string
+  description = "Prefix for access log object keys. Only used when `storage_access_log_bucket` is set."
+  default     = "log/"
 }
 
 variable "bucket_write_iam_role" {
@@ -51,4 +94,3 @@ variable "bucket_write_iam_role" {
     error_message = "bucket_write_iam_role must be a built-in role (roles/...) or a custom role (projects/{project}/roles/{id} or organizations/{org}/roles/{id})."
   }
 }
-

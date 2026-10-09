@@ -5,6 +5,7 @@
 module "worklytics_export" {
   source = "../../"
 
-  bucket_name                = var.bucket_name
   worklytics_tenant_sa_email = var.worklytics_tenant_sa_email
+  bucket_name                = var.bucket_name
+  bucket_location            = var.bucket_location
 }

@@ -1,6 +1,12 @@
 variable "bucket_name" {
   type        = string
-  description = "Name to be used for GCS bucket to which Worklytics data will be exported (eg 'acme-co-worklytics-export')."
+  description = "GCS bucket name for Worklytics export (import before apply when using a pre-existing bucket)."
+}
+
+variable "bucket_location" {
+  type        = string
+  description = "GCS location for the export bucket (eg 'US', 'EU', 'us-central1')."
+  default     = "US"
 }
 
 variable "worklytics_tenant_sa_email" {

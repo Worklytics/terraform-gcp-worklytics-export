@@ -13,29 +13,6 @@ terraform {
   }
 }
 
-
-# Worklytics export requires write + overwrite access to the bucket.
-# GCS implements overwrite as delete+create, so the minimum permissions (PoLP) are:
-#   - storage.objects.create  (upload/write new objects)
-#   - storage.objects.delete  (required for in-place overwrite of existing exports)
-#   - storage.objects.list    (needed to enumerate existing objects)
-#
-# `roles/storage.objectAdmin` satisfies these and is the Worklytics-documented role, but
-# also includes storage.objects.get/update/getIamPolicy/setIamPolicy which aren't required.
-# If you prefer tighter permissions, create a custom role with the three permissions above
-# and pass its fully-qualified ID via the `bucket_write_iam_role` variable, e.g.:
-#
-#   bucket_write_iam_role = "projects/my-project/roles/worklyticsExportWriter"
-#
-# See: https://docs.worklytics.co/analytics/data-export/google-cloud-storage
-#trivy:ignore:AVD-GCP-0007 - objectAdmin is the documented minimum for GCS export (overwrite requires delete+create); see comment above
-resource "google_storage_bucket_iam_member" "worklytics_export" {
-  bucket = var.bucket_name
-  member = "serviceAccount:${var.worklytics_tenant_sa_email}"
-  role   = var.bucket_write_iam_role
-}
-
-
 locals {
   todo_content = <<EOT
 # TODO : Configure Data Export in Worklytics
@@ -62,6 +39,58 @@ Alternatively, you may follow the manual instructions below:
 EOT
 }
 
+# Worklytics export requires write + overwrite access to the bucket.
+# GCS implements overwrite as delete+create, so the minimum permissions (PoLP) are:
+#   - storage.objects.create  (upload/write new objects)
+#   - storage.objects.delete  (required for in-place overwrite of existing exports)
+#   - storage.objects.list    (needed to enumerate existing objects)
+#
+# `roles/storage.objectAdmin` satisfies these and is the Worklytics-documented role, but
+# also includes storage.objects.get/update/getIamPolicy/setIamPolicy which aren't required.
+# If you prefer tighter permissions, create a custom role with the three permissions above
+# and pass its fully-qualified ID via the `bucket_write_iam_role` variable, e.g.:
+#
+#   bucket_write_iam_role = "projects/my-project/roles/worklyticsExportWriter"
+#
+# See: https://docs.worklytics.co/analytics/data-export/google-cloud-storage
+#trivy:ignore:AVD-GCP-0066 - CMEK left to customer via worklytics_export_bucket output
+#trivy:ignore:AVD-GCP-0077 - access logging optional via storage_access_log_bucket
+#trivy:ignore:AVD-GCP-0078 - versioning optional via enable_bucket_versioning
+resource "google_storage_bucket" "worklytics_export" {
+  name     = var.bucket_name
+  location = var.bucket_location
+
+  uniform_bucket_level_access = var.enable_bucket_uniform_bucket_level_access
+
+  dynamic "versioning" {
+    for_each = var.enable_bucket_versioning ? [1] : []
+    content {
+      enabled = true
+    }
+  }
+
+  dynamic "logging" {
+    for_each = var.storage_access_log_bucket != null ? [1] : []
+    content {
+      log_bucket        = var.storage_access_log_bucket
+      log_object_prefix = var.storage_access_log_prefix
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      # don't conflict with labels customers might wish to add themselves
+      labels,
+    ]
+  }
+}
+
+#trivy:ignore:AVD-GCP-0007 - objectAdmin is the documented minimum for GCS export (overwrite requires delete+create); see comment above
+resource "google_storage_bucket_iam_member" "worklytics_export" {
+  bucket = var.bucket_name
+  member = "serviceAccount:${var.worklytics_tenant_sa_email}"
+  role   = var.bucket_write_iam_role
+}
 
 resource "local_file" "readme" {
   count = var.todos_as_local_files ? 1 : 0
