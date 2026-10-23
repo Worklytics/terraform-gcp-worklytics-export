@@ -20,7 +20,7 @@ jobs:
       matrix:
         # Representative coverage across supported TF minors (full minor matrix is in validate/lint).
         # Keep this small so the plan×provider matrix doesn't starve the shared runner pool.
-        terraform_version: [ '~1.6.0', '~1.9.0', '~1.12.0', '~1.15.0', 'latest' ]
+        terraform_version: [ '~1.12.0', '~1.15.0', 'latest' ]
         google_provider_major: [ '6', '7' ] # major versions to test against (module requires >= 6.0)
     permissions:
       contents: 'read'
@@ -68,6 +68,10 @@ jobs:
               google = {
                 source  = "hashicorp/google"
                 version = "~> ${{ matrix.google_provider_major }}.0"
+              }
+              local = {
+                source  = "hashicorp/local"
+                version = ">= 2.0"
               }
             }
           }
