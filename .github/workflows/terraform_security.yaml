@@ -2,6 +2,9 @@ name: terraform_security
 
 on:
   push:
+    branches:
+      - main
+      - 'rc-*'
   pull_request:
   schedule:
     # Run weekly on Monday at 08:00 UTC so new CVE/misconfiguration rules are caught proactively.
@@ -52,3 +55,15 @@ jobs:
           format: table
           severity: CRITICAL,HIGH
           exit-code: '1'          # fail the job on CRITICAL or HIGH findings
+
+  # Branch protection can require a check named exactly "Terraform security".
+  security_gate:
+    name: Terraform security
+    needs: [trivy_scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Require Trivy scan success
+        run: |
+          echo "trivy_scan=${{ needs.trivy_scan.result }}"
+          test "${{ needs.trivy_scan.result }}" = "success"

@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 6.0"
     }
-    local = {
-      source  = "hashicorp/local"
-      version = ">= 2.0"
-    }
   }
 }
 
@@ -60,13 +56,4 @@ Alternatively, you may follow the manual instructions below:
     for the **Bucket** field
 
 EOT
-}
-
-
-resource "local_file" "readme" {
-  count = var.todos_as_local_files ? 1 : 0
-
-  filename = "TODO - configure export in worklytics.md"
-
-  content = local.todo_content
 }

@@ -69,6 +69,10 @@ jobs:
                 source  = "hashicorp/google"
                 version = "~> ${{ matrix.google_provider_major }}.0"
               }
+              local = {
+                source  = "hashicorp/local"
+                version = ">= 2.0"
+              }
             }
           }
 

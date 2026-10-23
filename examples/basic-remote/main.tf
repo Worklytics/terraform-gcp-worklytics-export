@@ -1,18 +1,27 @@
-
 # basic example of using this module remotely
 
 terraform {
   backend "local" {
   }
+
+  required_providers {
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.0"
+    }
+  }
 }
 
 module "worklytics_export" {
   source  = "Worklytics/worklytics-export/gcp"
-  version = "~> 1.0.0"
+  version = "~> 2.0.0"
 
   bucket_name                = var.bucket_name
   worklytics_tenant_sa_email = var.worklytics_tenant_sa_email
   worklytics_host            = var.worklytics_host
-  todos_as_outputs           = var.todos_as_outputs
-  todos_as_local_files       = var.todos_as_local_files
+}
+
+resource "local_file" "worklytics_export_todo" {
+  filename = "TODO - configure export in worklytics.md"
+  content  = module.worklytics_export.todo_markdown
 }

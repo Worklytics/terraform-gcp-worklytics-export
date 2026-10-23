@@ -23,7 +23,7 @@ resource "google_storage_bucket" "worklytics_export" {
 
 module "worklytics-export" {
   source  = "Worklytics/worklytics-export/gcp"
-  version = "~> 1.0.0"
+  version = "~> 2.0.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
@@ -34,7 +34,7 @@ module "worklytics-export" {
 via GitHub:
 ```hcl
 module "worklytics-export" {
-  source  = "git::https://github.com/worklytics/terraform-gcp-worklytics-export/?ref=v1.0.0"
+  source  = "git::https://github.com/worklytics/terraform-gcp-worklytics-export/?ref=v2.0.0"
 
   # email address of your Worklytics Tenant's Service Account (obtain from Worklytics)
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
@@ -46,9 +46,16 @@ module "worklytics-export" {
 
 #### `todo_markdown`
 
-If `todo_as_outputs` is set to true, this will be a markdown-formatted string of TODOs for you to
-complete outside of Terraform.
+Markdown-formatted TODOs for steps you must complete outside of Terraform (configure the export in
+the Worklytics app). The module does not write files to disk; consume this output in your root
+module if you want a local reminder file:
 
+```hcl
+resource "local_file" "worklytics_export_todo" {
+  filename = "TODO - configure export in worklytics.md"
+  content  = module.worklytics-export.todo_markdown
+}
+```
 
 ## Compatibility
 
@@ -69,6 +76,18 @@ please open an issue.
   `roles/storage.objectAdmin` (default is unchanged).
 
 Pin the module with `version = "~> 1.0.0"`.
+
+### Upgrading to 2.0
+
+2.0 removes the `hashicorp/local` provider from this module (no `local_file` resources inside the
+module). Post-apply instructions are always exposed via the `todo_markdown` output.
+
+From 1.x:
+
+- Remove `todos_as_outputs` and `todos_as_local_files` module arguments (both removed).
+- If you relied on the module writing `TODO - configure export in worklytics.md`, add a
+  `local_file` (or similar) in your **root** module wired to `todo_markdown` (see Outputs above).
+- Pin with `version = "~> 2.0.0"`.
 
 ## Usage Tips
 
@@ -121,7 +140,7 @@ resource "google_project_iam_custom_role" "worklytics_export_writer" {
 
 module "worklytics-export" {
   source  = "Worklytics/worklytics-export/gcp"
-  version = "~> 1.0.0"
+  version = "~> 2.0.0"
 
   worklytics_tenant_sa_email = "YOUR_SA_EMAIL@YOUR_PROJECT_ID.iam.gserviceaccount.com"
   bucket_name                = google_storage_bucket.worklytics_export.name
@@ -147,6 +166,10 @@ Developing:
      (v{MAJOR}.{MINOR}.{PATCH}), push to origin (GitHub), and create a release (hopefully automatic
      via GitHub Actions; via GitHub UI if not).
   3. releases should be automatically picked up by Terraform Registry (some lag here)
+
+CI runs [Trivy](https://trivy.dev/) configuration scans on Terraform in this repository (see
+`.github/workflows/terraform_security.yaml`). Findings at HIGH or above fail the build; results are
+also uploaded to the GitHub Security tab as SARIF.
 
 ## Non-Terraform Instructions
 
