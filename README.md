@@ -59,7 +59,7 @@ resource "local_file" "worklytics_export_todo" {
 
 ## Compatibility
 
-This module requires Terraform >= 1.3. It is tested against Terraform 1.6 through the latest
+This module requires Terraform `> 1.11.0`. It is tested against Terraform 1.12 through the latest
 released version.
 
 The module requires the `hashicorp/google` provider `>= 6.0` (tested against 6.x and 7.x).
@@ -84,6 +84,7 @@ module). Post-apply instructions are always exposed via the `todo_markdown` outp
 
 From 1.x:
 
+- Require Terraform `> 1.11.0` (1.11.x and earlier are not supported).
 - Remove `todos_as_outputs` and `todos_as_local_files` module arguments (both removed).
 - If you relied on the module writing `TODO - configure export in worklytics.md`, add a
   `local_file` (or similar) in your **root** module wired to `todo_markdown` (see Outputs above).
